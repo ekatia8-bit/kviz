@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Квиз «Киберзащита» 🛡️</title>
+    <style>
+        :root {
+            --color-primary: #3B82F6;
+            --color-primary-dark: #1E40AF;
+            --color-accent: #8B5CF6;
+            --color-success: #22C55E;
+            --color-error: #EF4444;
+            --color-card: #FFFFFF;
+            --color-text: #2D2D2D;
+            --color-text-light: #6B6B6B;
+            --font-main: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+            --radius: 16px;
+            --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 10px 30px rgba(59, 130, 246, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--color-text);
+            background: 
+                linear-gradient(135deg, rgba(239, 246, 255, 0.85) 0%, rgba(224, 231, 255, 0.85) 100%),
+                url('fon.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            line-height: 1.5;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 750px;
+            max-height: 95vh;
+            background: var(--color-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-soft);
+            padding: 24px 20px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .quiz-container::-webkit-scrollbar { width: 6px; }
+        .quiz-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .quiz-container::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 10px; }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .screen.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ВИДЕО-ЗАСТАВКА */
+        .intro-video-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .intro-video {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-soft);
+            background: #000;
+            object-fit: cover;
+        }
+
+        .btn-skip {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-main);
+        }
+
+        .btn-skip:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* КАРТИНКИ */
+        .quiz-image {
+            width: 100%;
+            max-width: 320px;
+            max-height: 180px;
+            height: auto;
+            margin: 0 auto 12px;
+            display: block;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-soft);
+            object-fit: contain;
+        }
+
+        .welcome-image { max-width: 280px; max-height: 200px; }
+
+        /* РАСКЛАДКА ВОПРОСА */
+        .question-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            align-items: stretch;
+            margin-bottom: 16px;
+        }
+
+        .question-image-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #F8FAFC;
+            border-radius: var(--radius);
+            padding: 10px;
+        }
+
+        .question-image-large {
+            width: 100%;
+            height: 100%;
+            min-height: 280px;
+            max-height: 420px;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        .question-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .answer-card {
+            padding: 14px 18px;
+            background: #FAFAFA;
+            border: 2px solid #EAEAEA;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 15px;
+            font-weight: 500;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-main);
+        }
+
+        .answer-card:hover:not(.disabled) {
+            transform: scale(1.02);
+            border-color: var(--color-primary);
+            background: white;
+            box-shadow: var(--shadow-hover);
+        }
+
+        .answer-card.correct {
+            background: #D1FBE3;
+            border-color: var(--color-success);
+            color: #065F46;
+        }
+
+        .answer-card.wrong {
+            background: #FEE2E2;
+            border-color: var(--color-error);
+            color: #991B1B;
+        }
+
+        .answer-card.disabled { cursor: not-allowed; opacity: 0.6; }
+        .answer-card.correct.disabled, .answer-card.wrong.disabled { opacity: 1; }
+
+        .answer-icon {
+            font-size: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .answer-card.correct .answer-icon, .answer-card.wrong .answer-icon { opacity: 1; }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            background: #FFF9E6;
+            border-left: 4px solid var(--color-primary);
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--color-text);
+            display: none;
+            animation: slideIn 0.4s ease;
+        }
+
+        .feedback.show { display: block; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-next { margin-top: 16px; display: none; }
+        .btn-next.show { display: block; animation: fadeIn 0.4s ease; }
+
+        .countdown {
+            display: inline-block;
+            margin-left: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        /* ПРИВЕТСТВИЕ */
+        .welcome-emoji {
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 12px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .welcome-title {
+            font-size: 26px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--color-primary-dark);
+        }
+
+        .welcome-text {
+            text-align: center;
+            color: var(--color-text-light);
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+
+        /* КНОПКИ */
+        .btn {
+            display: inline-block;
+            padding: 13px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: var(--color-primary);
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-main);
+            width: 100%;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn:active { transform: translateY(0); }
+
+        .btn-pulse { animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+        }
+
+        .btn-secondary {
+            background: var(--color-accent);
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #7C3AED;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        /* ПРОГРЕСС */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #F0F0F0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            border-radius: 10px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .question-counter {
+            text-align: center;
+            font-size: 13px;
+            color: var(--color-text-light);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        /* РЕЗУЛЬТАТЫ */
+        .celebration-video {
+            width: 280px;
+            height: 280px;
+            margin: 16px auto;
+            display: none;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-soft);
+            background: #000;
+            object-fit: cover;
+            object-position: center center;
+        }
+
+        @media (max-width: 600px) {
+            .celebration-video {
+                width: 240px;
+                height: 240px;
+            }
+        }
+
+        .video-error {
+            text-align: center;
+            color: var(--color-text-light);
+            font-size: 14px;
+            padding: 12px;
+            background: #F3F4F6;
+            border-radius: var(--radius);
+            margin: 10px auto;
+            max-width: 400px;
+            display: none;
+        }
+
+        .video-error.show { display: block; }
+
+        .btn-play-video {
+            background: var(--color-success);
+            margin: 10px auto;
+            max-width: 300px;
+            display: none;
+        }
+
+        .btn-play-video.show { display: block; }
+
+        .result-score {
+            text-align: center;
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--color-primary-dark);
+            margin-bottom: 6px;
+        }
+
+        .result-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--color-text);
+        }
+
+        .result-text {
+            text-align: center;
+            color: var(--color-text-light);
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+
+        .result-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* МОДАЛЬНОЕ ОКНО С ПРОМОКОДОМ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #F3F4F6;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-text);
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: var(--color-error);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .modal-image {
+            width: 100%;
+            max-width: 320px;
+            max-height: 220px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: block;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-primary-dark);
+            margin-bottom: 12px;
+        }
+
+        .modal-subtitle {
+            font-size: 14px;
+            color: var(--color-text-light);
+            margin-bottom: 16px;
+        }
+
+        .promo-box {
+            background: linear-gradient(135deg, #EFF6FF 0%, #E0E7FF 100%);
+            border: 2px dashed var(--color-primary);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .promo-label {
+            font-size: 12px;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .promo-code {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--color-primary-dark);
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn-copy {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: var(--transition);
+            font-family: var(--font-main);
+        }
+
+        .btn-copy:hover {
+            background: var(--color-primary-dark);
+        }
+
+        .btn-copy.copied {
+            background: var(--color-success);
+        }
+
+        /* АДАПТИВНОСТЬ */
+        @media (max-width: 600px) {
+            .quiz-container {
+                padding: 18px 14px;
+                max-height: 98vh;
+            }
+
+            .question-layout {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .question-image-large {
+                min-height: 200px;
+                max-height: 250px;
+            }
+
+            .welcome-title, .question-text { font-size: 18px; }
+            .welcome-emoji { font-size: 50px; }
+            .result-score { font-size: 36px; }
+            .answer-card { padding: 12px 14px; font-size: 14px; }
+
+            .modal-content { padding: 24px 18px; }
+            .promo-code { font-size: 22px; }
+            .modal-image { max-height: 180px; }
+
+            .intro-video {
+                max-height: 300px;
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 768px) {
+            .question-layout { grid-template-columns: 220px 1fr; }
+        }
+
+        @media (min-width: 768px) {
+            .quiz-container { padding: 32px; }
+            .welcome-title { font-size: 30px; }
+            .question-text { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+
+    <!-- 🔧 ЭКРАН 1: ВИДЕО-ЗАСТАВКА (показывается первым) -->
+    <div id="screen-intro" class="screen active">
+        <div class="intro-video-container">
+            <video id="introVideo" autoplay muted playsinline preload="auto" class="intro-video">
+                <source src="videos/intro.mp4" type="video/mp4">
+                Твой браузер не поддерживает видео.
+            </video>
+            <!-- Кнопка "Пропустить" -->
+            <button class="btn-skip" onclick="skipIntro()">Пропустить →</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 2: ПРИВЕТСТВИЕ -->
+    <div id="screen-welcome" class="screen">
+        <img src="images/welcome.png" alt="Папа Кот приветствует" class="quiz-image welcome-image" 
+             onerror="this.style.display='none'">
+        <h1 class="welcome-title">Киберзащита</h1>
+        <p class="welcome-text">
+            Интернет — это здорово, но в нём прячутся хитрые злодеи! Проверь, готов ли ты защищать свои данные, пароли и гаджеты. 5 вопросов — и ты станешь настоящим кибер-супергероем!
+        </p>
+        <button class="btn btn-pulse" onclick="startQuiz()">🚀 Начать игру</button>
+    </div>
+
+    <!-- ЭКРАН 3: ВОПРОСЫ -->
+    <div id="screen-quiz" class="screen">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="question-counter" id="questionCounter">Вопрос 1 из 5</div>
+        
+        <div class="question-layout">
+            <div class="question-image-wrapper">
+                <img id="questionImage" src="" alt="Иллюстрация вопроса" class="question-image-large" 
+                     style="display: none;">
+            </div>
+            <div class="question-content">
+                <h2 class="question-text" id="questionText">Вопрос появится здесь</h2>
+                <div class="answers" id="answersContainer"></div>
+            </div>
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+        <button class="btn btn-next" id="btnNext" onclick="nextQuestion()">
+            Далее <span class="countdown" id="countdown"></span>
+        </button>
+    </div>
+
+    <!-- ЭКРАН 4: РЕЗУЛЬТАТЫ -->
+    <div id="screen-result" class="screen">
+        <div class="result-score" id="resultScore">0 / 5</div>
+        <h2 class="result-title" id="resultTitle">Отличный результат!</h2>
+        <p class="result-text" id="resultText">Папа Кот гордится тобой!</p>
+        
+        <!-- Видео поздравления -->
+        <video id="celebrationVideo" loop muted playsinline preload="auto" class="celebration-video">
+            <source src="videos/celebration.mp4" type="video/mp4">
+            Твой браузер не поддерживает видео.
+        </video>
+        
+        <!-- Кнопка ручного запуска -->
+        <button class="btn btn-play-video" id="btnPlayVideo" onclick="playVideoManually()">
+            ▶️ Запустить поздравление
+        </button>
+        
+        <!-- Сообщение об ошибке -->
+        <div class="video-error" id="videoError">
+            🎬 Видео не загрузилось. Проверь файл <b>videos/celebration.mp4</b>
+        </div>
+        
+        <!-- Кнопки результатов -->
+        <div class="result-buttons">
+            <button class="btn" onclick="resetQuiz()">🔄 Пройти ещё раз</button>
+            <button class="btn btn-secondary" onclick="openPromoModal()">
+                🎁 Забрать промокод на курс по кибербезопасности
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО С ПРОМОКОДОМ -->
+<div class="modal-overlay" id="promoModal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closePromoModal()" aria-label="Закрыть">✕</button>
+        
+        <img src="promo.png" alt="Промокод" class="modal-image" 
+             onerror="this.style.display='none'">
+        
+        <h3 class="modal-title">🎉 Твой промокод на курс!</h3>
+        <p class="modal-subtitle">Используй его при оформлении курса по кибербезопасности</p>
+        
+        <div class="promo-box">
+            <div class="promo-label">Промокод</div>
+            <div class="promo-code" id="promoCode">БЕЗОПАСНОСТЬ</div>
+            <button class="btn-copy" id="btnCopy" onclick="copyPromo()">
+                📋 Скопировать
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            question: "Какой из этих паролей самый надёжный?",
+            image: "images/q1-password.png",
+            answers: ["123456", "password", "Kot_Papa_2026!", "qwerty"],
+            correct: 2,
+            feedbackRight: "Верно! 🔐 Сильный пароль — это микс букв, цифр и символов. Такой не подберёт ни один хакер!",
+            feedbackWrong: "Не совсем! 🔐 Надёжный пароль — длинный, с буквами разного регистра, цифрами и символами. Например: Kot_Papa_2026!"
+        },
+        {
+            question: "Тебе пришло письмо: «Срочно! Ваш аккаунт взломан, перейдите по ссылке». Что делать?",
+            image: "images/q2-phishing.png",
+            answers: [
+                "Срочно перейти по ссылке",
+                "Переслать друзьям",
+                "Не открывать и проверить адрес отправителя",
+                "Ввести свой пароль для проверки"
+            ],
+            correct: 2,
+            feedbackRight: "Отлично!  Это классический фишинг! Мошенники любят пугать и торопить. Всегда проверяй отправителя.",
+            feedbackWrong: "Осторожно! 🎣 Это фишинг — ловушка мошенников. Никогда не переходи по подозрительным ссылкам из писем."
+        },
+        {
+            question: "Ты в кафе и видишь бесплатную Wi-Fi сеть «Free_Cafe_WiFi». Стоит ли к ней подключаться?",
+            image: "images/q3-wifi.png",
+            answers: [
+                "Конечно, бесплатно же!",
+                "Да, но не вводить пароли и важные данные",
+                "Нет, лучше использовать мобильный интернет",
+                "Да, если сеть быстрая"
+            ],
+            correct: 2,
+            feedbackRight: "Супер! 📶 Публичный Wi-Fi — любимое место кибер-воришек. Мобильный интернет намного безопаснее!",
+            feedbackWrong: "Будь внимательнее! 📶 В публичных сетях легко украсть твои данные. Лучше использовать мобильный интернет."
+        },
+        {
+            question: "Друг в соцсети просит твой номер телефона и дату рождения «для розыгрыша приза». Твои действия?",
+            image: "images/q4-social.png",
+            answers: [
+                "Сразу прислать — вдруг выиграю!",
+                "Спросить лично или позвонить — вдруг друга взломали",
+                "Прислать, но только номер телефона",
+                "Отправить данные вымышленного человека"
+            ],
+            correct: 1,
+            feedbackRight: "Молодец! 🕵️ Аккаунты друзей тоже взламывают. Всегда проверяй такие просьбы лично — по телефону или при встрече.",
+            feedbackWrong: "Стоп! 🕵️ Аккаунт друга могли взломать. Никогда не отправляй личные данные в сообщениях — лучше позвони и уточни."
+        },
+        {
+            question: "Что такое двухфакторная аутентификация (2FA)?",
+            image: "images/q5-2fa.png",
+            answers: [
+                "Два разных пароля подряд",
+                "Вход по отпечатку пальца и паролю",
+                "Двойная цена за аккаунт",
+                "Два аккаунта на одном сайте"
+            ],
+            correct: 1,
+            feedbackRight: "Точно! 🔑 2FA — это как две двери вместо одной. Даже если пароль узнают, без второго фактора не войти!",
+            feedbackWrong: "Не совсем! 🔑 2FA — это дополнительный шаг входа: пароль + код из SMS, отпечаток или приложение. Двойная защита!"
+        }
+    ];
+
+    const titles = [
+        { min: 0, max: 1, emoji: "🐣", title: "Новичок в сети", text: "Не беда! Каждый эксперт когда-то начинал. Папа Кот верит — ты быстро научишься защищать свои данные!" },
+        { min: 2, max: 2, emoji: "🌱", title: "Любопытный сёрфер", text: "Хорошее начало! Ты уже знаешь кое-что важное. Ещё чуть-чуть — и станешь настоящим защитником!" },
+        { min: 3, max: 3, emoji: "🛡️", title: "Бдительный пользователь", text: "Отличный результат! Ты уже умеешь распознавать большинство ловушек. Папа Кот доволен!" },
+        { min: 4, max: 4, emoji: "🔐", title: "Защитник данных", text: "Впечатляет! Ты знаешь о кибербезопасности больше, чем большинство людей. Так держать!" },
+        { min: 5, max: 5, emoji: "🦸", title: "Кибер-супергерой!", text: "Невероятно! Все ответы верные — ты настоящий мастер цифровой защиты. Папа Кот аплодирует стоя!" }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+    let autoNextTimer = null;
+    let countdownTimer = null;
+
+    const AUTO_NEXT_DELAY = 4000;
+
+    // 🔧 ФУНКЦИИ ДЛЯ ВИДЕО-ЗАСТАВКИ
+    
+    // Автоматический переход после окончания видео
+    const introVideo = document.getElementById('introVideo');
+    
+    introVideo.addEventListener('ended', function() {
+        console.log('✅ Видео-заставка завершена');
+        showScreen('screen-welcome');
+    });
+
+    // Если видео не загрузилось — сразу показываем приветствие
+    introVideo.addEventListener('error', function() {
+        console.log('⚠️ Видео-заставка не загрузилось, переходим к приветствию');
+        showScreen('screen-welcome');
+    });
+
+    // Кнопка "Пропустить"
+    function skipIntro() {
+        console.log('⏭️ Заставка пропущена');
+        introVideo.pause();
+        showScreen('screen-welcome');
+    }
+
+    // Попытка автозапуска при загрузке
+    window.addEventListener('load', function() {
+        introVideo.play().catch(e => {
+            console.log('️ Автозапуск заставки заблокирован:', e);
+            // Если автозапуск не сработал — показываем приветствие через 2 секунды
+            setTimeout(() => {
+                showScreen('screen-welcome');
+            }, 2000);
+        });
+    });
+
+    function startQuiz() {
+        currentQuestion = 0;
+        score = 0;
+        showScreen('screen-quiz');
+        renderQuestion();
+    }
+
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(screenId);
+        if (target) {
+            target.classList.add('active');
+            document.querySelector('.quiz-container').scrollTop = 0;
+        }
+    }
+
+    function renderQuestion() {
+        answered = false;
+        const q = questions[currentQuestion];
+
+        const progress = ((currentQuestion) / questions.length) * 100;
+        document.getElementById('progressFill').style.width = progress + '%';
+
+        document.getElementById('questionCounter').textContent =
+            `Вопрос ${currentQuestion + 1} из ${questions.length}`;
+
+        document.getElementById('questionText').textContent = q.question;
+
+        const questionImage = document.getElementById('questionImage');
+        if (q.image) {
+            questionImage.src = q.image;
+            questionImage.style.display = 'block';
+            questionImage.onerror = function() {
+                this.style.display = 'none';
+            };
+        } else {
+            questionImage.style.display = 'none';
+        }
+
+        const container = document.getElementById('answersContainer');
+        container.innerHTML = '';
+        q.answers.forEach((answer, index) => {
+            const card = document.createElement('button');
+            card.className = 'answer-card';
+            card.innerHTML = `
+                <span>${answer}</span>
+                <span class="answer-icon"></span>
+            `;
+            card.onclick = () => selectAnswer(index, card);
+            container.appendChild(card);
+        });
+
+        document.getElementById('feedback').classList.remove('show');
+        document.getElementById('btnNext').classList.remove('show');
+        document.getElementById('countdown').textContent = '';
+
+        if (autoNextTimer) clearTimeout(autoNextTimer);
+        if (countdownTimer) clearInterval(countdownTimer);
+    }
+
+    function selectAnswer(index, card) {
+        if (answered) return;
+        answered = true;
+
+        const q = questions[currentQuestion];
+        const allCards = document.querySelectorAll('.answer-card');
+        const feedback = document.getElementById('feedback');
+
+        allCards.forEach(c => c.classList.add('disabled'));
+
+        allCards[q.correct].classList.add('correct');
+        allCards[q.correct].querySelector('.answer-icon').textContent = '✓';
+
+        if (index === q.correct) {
+            score++;
+            feedback.textContent = q.feedbackRight;
+        } else {
+            card.classList.add('wrong');
+            card.querySelector('.answer-icon').textContent = '✗';
+            feedback.textContent = q.feedbackWrong;
+        }
+
+        feedback.classList.add('show');
+        document.getElementById('btnNext').classList.add('show');
+
+        startCountdown();
+
+        autoNextTimer = setTimeout(() => {
+            nextQuestion();
+        }, AUTO_NEXT_DELAY);
+    }
+
+    function startCountdown() {
+        const countdownEl = document.getElementById('countdown');
+        let secondsLeft = Math.ceil(AUTO_NEXT_DELAY / 1000);
+        countdownEl.textContent = secondsLeft;
+
+        countdownTimer = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft > 0) {
+                countdownEl.textContent = secondsLeft;
+            } else {
+                countdownEl.textContent = '';
+                clearInterval(countdownTimer);
+            }
+        }, 1000);
+    }
+
+    function nextQuestion() {
+        if (autoNextTimer) clearTimeout(autoNextTimer);
+        if (countdownTimer) clearInterval(countdownTimer);
+        currentQuestion++;
+
+        if (currentQuestion < questions.length) {
+            renderQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('progressFill').style.width = '100%';
+
+        const result = titles.find(t => score >= t.min && score <= t.max);
+
+        document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+        document.getElementById('resultTitle').textContent = result.title;
+        document.getElementById('resultText').textContent = result.text;
+
+        showScreen('screen-result');
+
+        const video = document.getElementById('celebrationVideo');
+        const videoError = document.getElementById('videoError');
+        const btnPlayVideo = document.getElementById('btnPlayVideo');
+
+        video.style.display = 'none';
+        videoError.classList.remove('show');
+        btnPlayVideo.classList.remove('show');
+
+        if (video) {
+            video.currentTime = 0;
+
+            video.oncanplaythrough = function() {
+                console.log('✅ Видео загружено');
+                video.style.display = 'block';
+                video.play()
+                    .then(() => console.log('✅ Видео запущено'))
+                    .catch(e => {
+                        console.log('⚠️ Автозапуск заблокирован:', e);
+                        btnPlayVideo.classList.add('show');
+                    });
+            };
+
+            video.onerror = function() {
+                console.log(' Ошибка загрузки видео');
+                video.style.display = 'none';
+                videoError.classList.add('show');
+            };
+
+            setTimeout(() => {
+                if (video.style.display === 'none' && !videoError.classList.contains('show')) {
+                    video.style.display = 'block';
+                    video.play()
+                        .then(() => console.log('✅ Видео запущено по таймеру'))
+                        .catch(e => {
+                            console.log('⚠️ Не удалось:', e);
+                            btnPlayVideo.classList.add('show');
+                        });
+                }
+            }, 500);
+        }
+    }
+
+    function playVideoManually() {
+        const video = document.getElementById('celebrationVideo');
+        const btnPlayVideo = document.getElementById('btnPlayVideo');
+        
+        video.play()
+            .then(() => {
+                console.log('✅ Видео запущено вручную');
+                btnPlayVideo.classList.remove('show');
+            })
+            .catch(e => console.log('❌ Ошибка:', e));
+    }
+
+    function resetQuiz() {
+        currentQuestion = 0;
+        score = 0;
+        
+        const video = document.getElementById('celebrationVideo');
+        if (video) {
+            video.pause();
+            video.style.display = 'none';
+        }
+        
+        showScreen('screen-welcome');
+    }
+
+    // ФУНКЦИИ МОДАЛЬНОГО ОКНА С ПРОМОКОДОМ
+    
+    function openPromoModal() {
+        const modal = document.getElementById('promoModal');
+        modal.classList.add('active');
+        const btnCopy = document.getElementById('btnCopy');
+        btnCopy.textContent = '📋 Скопировать';
+        btnCopy.classList.remove('copied');
+    }
+
+    function closePromoModal() {
+        const modal = document.getElementById('promoModal');
+        modal.classList.remove('active');
+    }
+
+    document.getElementById('promoModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePromoModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePromoModal();
+        }
+    });
+
+    function copyPromo() {
+        const promoCode = document.getElementById('promoCode').textContent;
+        const btnCopy = document.getElementById('btnCopy');
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(promoCode)
+                .then(() => {
+                    btnCopy.textContent = '✅ Скопировано!';
+                    btnCopy.classList.add('copied');
+                })
+                .catch(() => fallbackCopy(promoCode, btnCopy));
+        } else {
+            fallbackCopy(promoCode, btnCopy);
+        }
+    }
+
+    function fallbackCopy(text, btn) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            btn.textContent = '✅ Скопировано!';
+            btn.classList.add('copied');
+        } catch (e) {
+            btn.textContent = '❌ Не удалось';
+        }
+        document.body.removeChild(textarea);
+    }
+</script>
+
+</body>
+</html>
